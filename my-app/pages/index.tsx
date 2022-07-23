@@ -1,4 +1,5 @@
 import { BigNumber, Contract, providers, utils } from "ethers";
+import { NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
 import Web3Modal from "web3modal";
