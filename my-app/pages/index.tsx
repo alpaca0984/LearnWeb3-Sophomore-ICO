@@ -101,7 +101,7 @@ const Home: NextPage = () => {
         provider
       );
       // We will get the signer now to extract the address of the currently connected MetaMask account
-      const signer = await getProviderOrSigner(true);
+      const signer = await getProviderOrSigner(true) as providers.JsonRpcSigner;
       // Get the address associated to the signer which is connected to  MetaMask
       const address = await signer.getAddress();
       // call the balanceOf from the token contract to get the number of tokens held by the user
@@ -117,7 +117,7 @@ const Home: NextPage = () => {
   /**
    * mintCryptoDevToken: mints `amount` number of tokens to a given address
    */
-  const mintCryptoDevToken = async (amount) => {
+  const mintCryptoDevToken = async (amount: BigNumber) => {
     try {
       // We need a Signer here since this is a 'write' transaction.
       // Create an instance of tokenContract
@@ -129,7 +129,7 @@ const Home: NextPage = () => {
         signer
       );
       // Each token is of `0.001 ether`. The value we need to send is `0.001 * amount`
-      const value = 0.001 * amount;
+      const value = amount.mul(0.001);
       const tx = await tokenContract.mint(amount, {
         // value signifies the cost of one crypto dev token which is "0.001" eth.
         // We are parsing `0.001` string to ether using the utils library from ethers.js
@@ -205,18 +205,18 @@ const Home: NextPage = () => {
   const getOwner = async () => {
     try {
       const provider = await getProviderOrSigner();
-      const nftContract = new Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_CONTRACT_ABI, provider);
+      const tokenContract = new Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_CONTRACT_ABI, provider);
       // call the owner function from the contract
       const _owner = await tokenContract.owner();
       // we get signer to extract address of currently connected Metamask account
-      const signer = await getProviderOrSigner(true);
+      const signer = await getProviderOrSigner(true) as providers.JsonRpcSigner;
       // Get the address associated to signer which is connected to Metamask
       const address = await signer.getAddress();
       if (address.toLowerCase() === _owner.toLowerCase()) {
         setIsOwner(true);
       }
     } catch (err) {
-      console.error(err.message);
+      console.error(err);
     }
   };
 
@@ -258,7 +258,7 @@ const Home: NextPage = () => {
   const getProviderOrSigner = async (needSigner = false) => {
     // Connect to Metamask
     // Since we store `web3Modal` as a reference, we need to access the `current` value to get access to the underlying object
-    const provider = await web3ModalRef.current.connect();
+    const provider = await web3ModalRef.current?.connect();
     const web3Provider = new providers.Web3Provider(provider);
 
     // If user is not connected to the Rinkeby network, let them know and throw an error
@@ -333,11 +333,11 @@ const Home: NextPage = () => {
       );
     }
     // If tokens to be claimed are greater than 0, Return a claim button
-    if (tokensToBeClaimed > 0) {
+    if (tokensToBeClaimed.gt(0)) {
       return (
         <div>
           <div className={styles.description}>
-            {tokensToBeClaimed * 10} Tokens can be claimed!
+            {`${tokensToBeClaimed.mul(10)} Tokens can be claimed!`}
           </div>
           <button className={styles.button} onClick={claimCryptoDevTokens}>
             Claim Tokens
@@ -360,7 +360,7 @@ const Home: NextPage = () => {
 
         <button
           className={styles.button}
-          disabled={!(tokenAmount > 0)}
+          disabled={tokenAmount.lte(0)}
           onClick={() => mintCryptoDevToken(tokenAmount)}
         >
           Mint Tokens
